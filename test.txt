@@ -1,0 +1,47 @@
+---
+
+- name: Create a pool
+  hosts: all
+  connection: local
+
+  vars:
+    provider:
+      server: 10.10.10.255
+      user: ansible
+      validate_certs: no
+      server_port: 443
+      no_f5_teem: True
+
+  tasks:
+  
+    - name: Add a pool
+      bigip_pool:
+        provider: "{{ provider }}"
+        name: Itiviti-post-trade-bridge_15210
+        service_down_action: reset
+        
+
+    - name: Add pool member
+      bigip_pool_member:
+        provider: "{{ provider }}"
+        pool: Itiviti-post-trade-bridge_15210
+        aggregate:
+          - name: catalys1
+            host: 10.10.10.254
+            port: 15210
+          - name: catalys2
+            host: 10.10.10.255
+            port: 15210
+
+    - name: Add virtual server
+      bigip_virtual_server:
+        provider: "{{ provider }}"
+        state: present
+        partition: Common
+        name: Itiviti-post-trade-bridge_15210
+        source: 0.0.0.0/0
+        destination: 10.10.10.255
+        port: 15210
+        pool: Itiviti-post-trade-bridge_15210
+        snat: Automap
+        description: Itiviti-post-trade-bridge_15210
