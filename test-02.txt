@@ -1,0 +1,48 @@
+###test 02
+---
+
+- name: Create a pool
+  hosts: all
+  connection: local
+
+  vars:
+    provider:
+      server: 10.x.x.x
+      user: ansible
+      validate_certs: no
+      server_port: 443
+      no_f5_teem: True
+
+  tasks:
+  
+    - name: Add a pool
+      bigip_pool:
+        provider: "{{ provider }}"
+        name: test_15210
+        service_down_action: reset
+        
+
+    - name: Add pool member
+      bigip_pool_member:
+        provider: "{{ provider }}"
+        pool: test_15210
+        aggregate:
+          - name: catalys1
+            host: 10.y.y.y
+            port: 15210
+          - name: catalys2
+            host: 10.z.z.z
+            port: 15210
+
+    - name: Add virtual server
+      bigip_virtual_server:
+        provider: "{{ provider }}"
+        state: present
+        partition: Common
+        name: test_15210
+        source: 0.0.0.0/0
+        destination: 10.x.x.x
+        port: 15210
+        pool: test_15210
+        snat: Automap
+        description: test_15210
